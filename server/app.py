@@ -14,25 +14,45 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
+
 @app.route('/')
 def index():
     return '<h1>Bakery GET API</h1>'
 
+
 @app.route('/bakeries')
 def bakeries():
-    return ''
+    bakeries = Bakery.query.all()
+    bakery_list = [{"id": bakery.id, "name": bakery.name} for bakery in bakeries]
+    return jsonify(bakery_list)
+
 
 @app.route('/bakeries/<int:id>')
 def bakery_by_id(id):
-    return ''
+    bakery = Bakery.query.get(id)
+    if bakery:
+        bakery_data = {"id": bakery.id, "name": bakery.name}
+        bakery_data["baked_goods"] = [{"id": bg.id, "name": bg.name, "price": bg.price} for bg in bakery.baked_goods]
+        return jsonify(bakery_data)
+    else:
+        return make_response(jsonify({"error": "Bakery not found"}), 404)
+
 
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
-    return ''
+    baked_goods = BakedGood.query.order_by(BakedGood.price.desc()).all()
+    baked_goods_list = [{"id": bg.id, "name": bg.name, "price": bg.price} for bg in baked_goods]
+    return jsonify(baked_goods_list)
+
 
 @app.route('/baked_goods/most_expensive')
 def most_expensive_baked_good():
-    return ''
+    baked_good = BakedGood.query.order_by(BakedGood.price.desc()).first()
+    if baked_good:
+        return jsonify({"id": baked_good.id, "name": baked_good.name, "price": baked_good.price})
+    else:
+        return make_response(jsonify({"error": "No baked goods found"}), 404)
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
